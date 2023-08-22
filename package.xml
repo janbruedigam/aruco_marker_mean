@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>aruco_marker_mean</name>
+  <version>0.0.0</version>
+  <description>The aruco_marker_mean package</description>
+
+  <maintainer email="todo@todo.todo">todo</maintainer>
+  <license>TODO</license>
+
+  <depend>roscpp</depend>
+  <depend>eigen</depend>
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
