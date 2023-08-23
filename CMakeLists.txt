@@ -8,6 +8,9 @@ find_package(
     COMPONENTS 
     roscpp 
     std_msgs 
+    geometry_msgs
+    aruco_msgs
+    tf2_ros
     message_generation
 )
 
