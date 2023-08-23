@@ -44,7 +44,7 @@ void ArucoMarkerMean::init_ros()
 {
     ROS_INFO("  Initializing ROS pubs and subs");
 
-    marker_mean_pose_pub_ = node_handle_->advertise<geometry_msgs::Pose>("aruco_marker_mean_pose", 10);
+    marker_mean_pub_ = node_handle_->advertise<aruco_msgs::Marker>("aruco_marker_mean", 10);
 
     markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
 }

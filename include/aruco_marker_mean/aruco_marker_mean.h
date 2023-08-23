@@ -4,12 +4,12 @@
 #include <ros/ros.h>
 #include <csignal>
 
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Quaternion.h>
 #include <aruco_msgs/MarkerArray.h>
+#include <aruco_msgs/Marker.h>
 
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <eigen3/Eigen/Dense>
@@ -33,7 +33,7 @@ class ArucoMarkerMean {
 
         geometry_msgs::Quaternion quaternion_multiplication(geometry_msgs::Quaternion q1, geometry_msgs::Quaternion q2);
 
-        geometry_msgs::Pose marker_mean_pose_;
+        aruco_msgs::Marker marker_mean_;
         tf2_ros::Buffer tf_buffer_;
         tf2_ros::TransformListener tf_listener_;
 
@@ -42,7 +42,7 @@ class ArucoMarkerMean {
         ros::NodeHandle *node_handle_;
 
         // Publishers
-        ros::Publisher marker_mean_pose_pub_;
+        ros::Publisher marker_mean_pub_;
 
         // Subscribers
         ros::Subscriber markers_sub_;
