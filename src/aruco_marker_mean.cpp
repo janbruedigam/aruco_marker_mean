@@ -1,7 +1,7 @@
 #include "aruco_marker_mean/aruco_marker_mean.h"
 
 ArucoMarkerMean::ArucoMarkerMean(ros::NodeHandle *node_handle)
-: tf_listener_(tf_buffer_)
+: tf_listener_(tf_buffer_), image_transport_(*node_handle)
 {
     node_handle_ = node_handle;
 
@@ -45,8 +45,11 @@ void ArucoMarkerMean::init_ros()
     ROS_INFO("  Initializing ROS pubs and subs");
 
     marker_mean_pub_ = node_handle_->advertise<aruco_msgs::Marker>("aruco_marker_mean", 10);
+    result_pub_ = image_transport_.advertise("result", 1);
 
     markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
+    camera_info_sub_ = node_handle_->subscribe("/camera_info", 1, &ArucoMarkerMean::camera_info_callback, this);
+    result_sub_ = image_transport_.subscribe("/aruco_ros/result", 1, &ArucoMarkerMean::aruco_ros_result_callback, this);
 }
 
 bool ArucoMarkerMean::close()

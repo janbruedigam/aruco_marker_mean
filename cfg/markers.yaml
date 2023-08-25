@@ -4,12 +4,12 @@
 markers: [
   [
     id: 1, 
-    position: [0.1, 0.0, 0.0], 
-    orientation: [1.0, 0.0, 0.0, 0.0]
+    position: [-0.1, 0.0, 0.0], 
+    orientation: [0.0, 0.0, 0.0, 1.0]
   ],
   [
     id: 2, 
-    position: [-0.1, 0.0, 0.0], 
-    orientation: [1.0, 0.0, 0.0, 0.0]
+    position: [0.1, 0.0, 0.0], 
+    orientation: [0.0, 0.0, 0.0, 1.0]
   ]
 ]

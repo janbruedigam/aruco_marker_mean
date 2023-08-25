@@ -11,6 +11,15 @@ void ArucoMarkerMean::timer_callback()
     ros::spinOnce();
 }
 
+void ArucoMarkerMean::camera_info_callback(const sensor_msgs::CameraInfo &msg)
+{
+    bool useRectifiedImages = true;
+    camera_info_ = aruco_ros::rosCameraInfo2ArucoCamParams(msg, useRectifiedImages);
+
+    camera_info_received_ = true;
+    camera_info_sub_.shutdown();
+}
+
 geometry_msgs::Quaternion ArucoMarkerMean::quaternion_multiplication(geometry_msgs::Quaternion q1, geometry_msgs::Quaternion q2)
 {
     geometry_msgs::Quaternion q;
@@ -81,4 +90,46 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
     marker_mean_.pose.pose.orientation.w = q_mean[3];
 
     marker_mean_pub_.publish(marker_mean_);
+}
+
+aruco::Marker ArucoMarkerMean::aruco_ros_marker_to_aruco_marker(aruco_msgs::Marker marker_in)
+{
+    aruco::Marker marker;
+    marker.id = marker_in.id;
+    marker.ssize = 0.045;
+    cv::Mat rot(3,3,CV_64FC1);
+    marker.Rvec.at<float>(0,0) = marker_in.pose.pose.orientation.x/marker_in.pose.pose.orientation.w;
+    marker.Rvec.at<float>(1,0) = marker_in.pose.pose.orientation.y/marker_in.pose.pose.orientation.w;
+    marker.Rvec.at<float>(2,0) = marker_in.pose.pose.orientation.z/marker_in.pose.pose.orientation.w;
+    marker.Tvec.at<float>(0,0) = marker_in.pose.pose.position.x;
+    marker.Tvec.at<float>(1,0) = marker_in.pose.pose.position.y;
+    marker.Tvec.at<float>(2,0) = marker_in.pose.pose.position.z;
+
+    marker.contourPoints.push_back(cv::Point(50,50));
+    marker.contourPoints.push_back(cv::Point(50,80));
+    marker.contourPoints.push_back(cv::Point(80,80));
+    marker.contourPoints.push_back(cv::Point(80,50));
+
+
+    return marker;
+}
+
+void ArucoMarkerMean::aruco_ros_result_callback(const sensor_msgs::ImageConstPtr &msg)
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+    cv::Mat inImage = cv_ptr->image;
+
+    aruco::Marker aruco_marker_mean = aruco_ros_marker_to_aruco_marker(marker_mean_);
+
+    if(camera_info_received_)
+    {
+        aruco::CvDrawingUtils::draw3dAxis(inImage, aruco_marker_mean, camera_info_);
+    }
+    
+    cv_bridge::CvImage out_msg;
+    // out_msg.header.stamp = curr_stamp;
+    out_msg.encoding = sensor_msgs::image_encodings::RGB8;
+    out_msg.image = inImage;
+    result_pub_.publish(out_msg.toImageMsg());
 }

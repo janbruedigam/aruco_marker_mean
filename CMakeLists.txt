@@ -9,12 +9,18 @@ find_package(
     roscpp 
     std_msgs 
     geometry_msgs
+    sensor_msgs
+    aruco
     aruco_msgs
+    aruco_ros
+    image_transport
+    cv_bridge
     tf2_ros
     message_generation
 )
 
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV 4.2.0 REQUIRED)
 
 catkin_package(
     INCLUDE_DIRS include
@@ -24,6 +30,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${Eigen_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 file(GLOB SOURCES_CPP src/*.cpp)
