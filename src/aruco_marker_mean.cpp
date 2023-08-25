@@ -20,7 +20,11 @@ ArucoMarkerMean::~ArucoMarkerMean()
 void ArucoMarkerMean::init_params()
 {
     if(!node_handle_->getParam("marker_size", marker_size_)) {
-        ros::param::param<float>("marker_size", marker_size_, 0.1);
+        marker_size_ = 0.1;
+    }
+
+    if(!node_handle_->getParam("image_is_rectified", image_is_rectified_)) {
+        image_is_rectified_ = true;
     }
 }
 
@@ -31,8 +35,8 @@ void ArucoMarkerMean::init_ros()
     marker_mean_pub_ = node_handle_->advertise<aruco_msgs::Marker>("aruco_marker_mean", 10);
     result_pub_ = image_transport_.advertise("result", 1);
 
-    markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
     markers_list_sub_ = node_handle_->subscribe("/aruco_ros/markers_list", 1, &ArucoMarkerMean::aruco_ros_markers_list_callback, this);
+    markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
     camera_info_sub_ = node_handle_->subscribe("/camera_info", 1, &ArucoMarkerMean::camera_info_callback, this);
     result_sub_ = image_transport_.subscribe("/aruco_ros/result", 1, &ArucoMarkerMean::aruco_ros_result_callback, this);
 }

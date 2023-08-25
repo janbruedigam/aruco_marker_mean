@@ -41,19 +41,22 @@ class ArucoMarkerMean {
 
         // Callbacks
         void timer_callback(); // Timer callback (ros spin)
-        void aruco_ros_markers_callback(const aruco_msgs::MarkerArray markers);
         void aruco_ros_markers_list_callback(const std_msgs::UInt32MultiArray markers_list);
+        void aruco_ros_markers_callback(const aruco_msgs::MarkerArray markers);
         void camera_info_callback(const sensor_msgs::CameraInfo &msg);
         void aruco_ros_result_callback(const sensor_msgs::ImageConstPtr& msg);
 
         geometry_msgs::Quaternion quaternion_multiplication(geometry_msgs::Quaternion q1, geometry_msgs::Quaternion q2);
         aruco::Marker aruco_ros_marker_to_aruco_marker(aruco_msgs::Marker marker);
 
+        tf2_ros::Buffer tf_buffer_;
+        tf2_ros::TransformListener tf_listener_;
+
         bool marker_found_;
         float marker_size_;
         aruco_msgs::Marker marker_mean_;
-        tf2_ros::Buffer tf_buffer_;
-        tf2_ros::TransformListener tf_listener_;
+
+        bool image_is_rectified_;
         bool camera_info_received_;
         aruco::CameraParameters camera_info_;
         image_transport::ImageTransport image_transport_;
@@ -67,8 +70,8 @@ class ArucoMarkerMean {
         image_transport::Publisher result_pub_;
 
         // Subscribers
-        ros::Subscriber markers_sub_;
         ros::Subscriber markers_list_sub_;
+        ros::Subscriber markers_sub_;
         ros::Subscriber camera_info_sub_;
         image_transport::Subscriber result_sub_;
 };

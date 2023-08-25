@@ -11,14 +11,6 @@ void ArucoMarkerMean::timer_callback()
     ros::spinOnce();
 }
 
-void ArucoMarkerMean::camera_info_callback(const sensor_msgs::CameraInfo &msg)
-{
-    bool useRectifiedImages = true;
-    camera_info_ = aruco_ros::rosCameraInfo2ArucoCamParams(msg, useRectifiedImages);
-
-    camera_info_received_ = true;
-    camera_info_sub_.shutdown();
-}
 
 geometry_msgs::Quaternion ArucoMarkerMean::quaternion_multiplication(geometry_msgs::Quaternion q1, geometry_msgs::Quaternion q2)
 {
@@ -29,6 +21,40 @@ geometry_msgs::Quaternion ArucoMarkerMean::quaternion_multiplication(geometry_ms
     q.w = q1.w*q2.w - q1.x*q2.x - q1.y*q2.y - q1.z*q2.z;
 
     return q;
+}
+
+aruco::Marker ArucoMarkerMean::aruco_ros_marker_to_aruco_marker(aruco_msgs::Marker marker_in)
+{
+    aruco::Marker marker;
+
+    marker.id = marker_in.id;
+    marker.ssize = marker_size_;
+
+    float x = marker_in.pose.pose.orientation.x;
+    float y = marker_in.pose.pose.orientation.y;
+    float z = marker_in.pose.pose.orientation.z;
+    float w = marker_in.pose.pose.orientation.w;
+    float norm_v = std::sqrt(x*x+y*y+z*z);
+    float theta = std::acos(w)*2;
+
+    marker.Rvec.at<float>(0,0) = x/norm_v*theta;
+    marker.Rvec.at<float>(1,0) = y/norm_v*theta;
+    marker.Rvec.at<float>(2,0) = z/norm_v*theta;
+
+    marker.Tvec.at<float>(0,0) = marker_in.pose.pose.position.x;
+    marker.Tvec.at<float>(1,0) = marker_in.pose.pose.position.y;
+    marker.Tvec.at<float>(2,0) = marker_in.pose.pose.position.z;
+
+    return marker;
+}
+
+
+void ArucoMarkerMean::aruco_ros_markers_list_callback(const std_msgs::UInt32MultiArray markers_list)
+{
+    if(markers_list.data.size() == 0)
+    {
+        marker_found_ = false;
+    }
 }
 
 void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray markers)
@@ -93,35 +119,12 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
     marker_mean_pub_.publish(marker_mean_);
 }
 
-void ArucoMarkerMean::aruco_ros_markers_list_callback(const std_msgs::UInt32MultiArray markers_list)
+void ArucoMarkerMean::camera_info_callback(const sensor_msgs::CameraInfo &msg)
 {
-    if(markers_list.data.size() == 0)
-    {
-        marker_found_ = false;
-    }
-}
+    camera_info_ = aruco_ros::rosCameraInfo2ArucoCamParams(msg, image_is_rectified_);
+    camera_info_received_ = true;
 
-aruco::Marker ArucoMarkerMean::aruco_ros_marker_to_aruco_marker(aruco_msgs::Marker marker_in)
-{
-    aruco::Marker marker;
-
-    marker.id = marker_in.id;
-    marker.ssize = marker_size_;
-
-    float x = marker_in.pose.pose.orientation.x;
-    float y = marker_in.pose.pose.orientation.y;
-    float z = marker_in.pose.pose.orientation.z;
-    float w = marker_in.pose.pose.orientation.w;
-    float norm_v = std::sqrt(x*x+y*y+z*z);
-    float theta = std::acos(w)*2;
-    marker.Rvec.at<float>(0,0) = x/norm_v*theta;
-    marker.Rvec.at<float>(1,0) = y/norm_v*theta;
-    marker.Rvec.at<float>(2,0) = z/norm_v*theta;
-    marker.Tvec.at<float>(0,0) = marker_in.pose.pose.position.x;
-    marker.Tvec.at<float>(1,0) = marker_in.pose.pose.position.y;
-    marker.Tvec.at<float>(2,0) = marker_in.pose.pose.position.z;
-
-    return marker;
+    camera_info_sub_.shutdown();
 }
 
 void ArucoMarkerMean::aruco_ros_result_callback(const sensor_msgs::ImageConstPtr &msg)
@@ -130,16 +133,11 @@ void ArucoMarkerMean::aruco_ros_result_callback(const sensor_msgs::ImageConstPtr
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
     cv::Mat image_in = cv_ptr->image;
 
-    if(marker_found_)
+    if(marker_found_ && camera_info_received_)
     {
         aruco::Marker aruco_marker_mean = aruco_ros_marker_to_aruco_marker(marker_mean_);
-
-        if(camera_info_received_)
-        {
-            aruco::CvDrawingUtils::draw3dAxis(image_in, aruco_marker_mean, camera_info_);
-        }
+        aruco::CvDrawingUtils::draw3dAxis(image_in, aruco_marker_mean, camera_info_);
     }
-    
     
     cv_bridge::CvImage image_out;
     image_out.header.stamp = marker_mean_.header.stamp;
