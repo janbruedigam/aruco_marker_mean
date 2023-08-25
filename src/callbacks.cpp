@@ -59,6 +59,7 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
                 marker_mean_.pose.pose.position.z = 0;
 
                 one_relevant_marker_found = true;
+                marker_found_ = true;
             }
             
             marker_mean_.pose.pose.position.x += markers.markers[i].pose.pose.position.x + transform.transform.translation.x;
@@ -92,16 +93,25 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
     marker_mean_pub_.publish(marker_mean_);
 }
 
+void ArucoMarkerMean::aruco_ros_markers_list_callback(const std_msgs::UInt32MultiArray markers_list)
+{
+    if(markers_list.data.size() == 0)
+    {
+        marker_found_ = false;
+    }
+}
+
 aruco::Marker ArucoMarkerMean::aruco_ros_marker_to_aruco_marker(aruco_msgs::Marker marker_in)
 {
     aruco::Marker marker;
+
     marker.id = marker_in.id;
-    marker.ssize = 0.045;
+    marker.ssize = marker_size_;
+
     float x = marker_in.pose.pose.orientation.x;
     float y = marker_in.pose.pose.orientation.y;
     float z = marker_in.pose.pose.orientation.z;
     float w = marker_in.pose.pose.orientation.w;
-    cv::Mat rot(3,3,CV_64FC1);
     float norm_v = std::sqrt(x*x+y*y+z*z);
     float theta = std::acos(w)*2;
     marker.Rvec.at<float>(0,0) = x/norm_v*theta;
@@ -111,12 +121,6 @@ aruco::Marker ArucoMarkerMean::aruco_ros_marker_to_aruco_marker(aruco_msgs::Mark
     marker.Tvec.at<float>(1,0) = marker_in.pose.pose.position.y;
     marker.Tvec.at<float>(2,0) = marker_in.pose.pose.position.z;
 
-    marker.contourPoints.push_back(cv::Point(50,50));
-    marker.contourPoints.push_back(cv::Point(50,80));
-    marker.contourPoints.push_back(cv::Point(80,80));
-    marker.contourPoints.push_back(cv::Point(80,50));
-
-
     return marker;
 }
 
@@ -124,18 +128,22 @@ void ArucoMarkerMean::aruco_ros_result_callback(const sensor_msgs::ImageConstPtr
 {
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
-    cv::Mat inImage = cv_ptr->image;
+    cv::Mat image_in = cv_ptr->image;
 
-    aruco::Marker aruco_marker_mean = aruco_ros_marker_to_aruco_marker(marker_mean_);
-
-    if(camera_info_received_)
+    if(marker_found_)
     {
-        aruco::CvDrawingUtils::draw3dAxis(inImage, aruco_marker_mean, camera_info_);
+        aruco::Marker aruco_marker_mean = aruco_ros_marker_to_aruco_marker(marker_mean_);
+
+        if(camera_info_received_)
+        {
+            aruco::CvDrawingUtils::draw3dAxis(image_in, aruco_marker_mean, camera_info_);
+        }
     }
     
-    cv_bridge::CvImage out_msg;
-    // out_msg.header.stamp = curr_stamp;
-    out_msg.encoding = sensor_msgs::image_encodings::RGB8;
-    out_msg.image = inImage;
-    result_pub_.publish(out_msg.toImageMsg());
+    
+    cv_bridge::CvImage image_out;
+    image_out.header.stamp = marker_mean_.header.stamp;
+    image_out.encoding = sensor_msgs::image_encodings::RGB8;
+    image_out.image = image_in;
+    result_pub_.publish(image_out.toImageMsg());
 }

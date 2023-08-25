@@ -6,6 +6,7 @@ ArucoMarkerMean::ArucoMarkerMean(ros::NodeHandle *node_handle)
     node_handle_ = node_handle;
 
     ROS_INFO("Initializing");
+    init_params();
     init_ros();
     init_tf();
     ROS_INFO("Initializing done");
@@ -14,6 +15,26 @@ ArucoMarkerMean::ArucoMarkerMean(ros::NodeHandle *node_handle)
 ArucoMarkerMean::~ArucoMarkerMean()
 {
     this->close();
+}
+
+void ArucoMarkerMean::init_params()
+{
+    if(!node_handle_->getParam("marker_size", marker_size_)) {
+        ros::param::param<float>("marker_size", marker_size_, 0.1);
+    }
+}
+
+void ArucoMarkerMean::init_ros()
+{
+    ROS_INFO("  Initializing ROS pubs and subs");
+
+    marker_mean_pub_ = node_handle_->advertise<aruco_msgs::Marker>("aruco_marker_mean", 10);
+    result_pub_ = image_transport_.advertise("result", 1);
+
+    markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
+    markers_list_sub_ = node_handle_->subscribe("/aruco_ros/markers_list", 1, &ArucoMarkerMean::aruco_ros_markers_list_callback, this);
+    camera_info_sub_ = node_handle_->subscribe("/camera_info", 1, &ArucoMarkerMean::camera_info_callback, this);
+    result_sub_ = image_transport_.subscribe("/aruco_ros/result", 1, &ArucoMarkerMean::aruco_ros_result_callback, this);
 }
 
 void ArucoMarkerMean::init_tf()
@@ -38,18 +59,6 @@ void ArucoMarkerMean::init_tf()
         transform.transform.rotation.w = double(markers[i][2]["orientation"][3]);
         static_broadcaster.sendTransform(transform);
     }
-}
-
-void ArucoMarkerMean::init_ros()
-{
-    ROS_INFO("  Initializing ROS pubs and subs");
-
-    marker_mean_pub_ = node_handle_->advertise<aruco_msgs::Marker>("aruco_marker_mean", 10);
-    result_pub_ = image_transport_.advertise("result", 1);
-
-    markers_sub_ = node_handle_->subscribe("/aruco_ros/markers", 1, &ArucoMarkerMean::aruco_ros_markers_callback, this);
-    camera_info_sub_ = node_handle_->subscribe("/camera_info", 1, &ArucoMarkerMean::camera_info_callback, this);
-    result_sub_ = image_transport_.subscribe("/aruco_ros/result", 1, &ArucoMarkerMean::aruco_ros_result_callback, this);
 }
 
 bool ArucoMarkerMean::close()
