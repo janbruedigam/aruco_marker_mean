@@ -1,15 +1,36 @@
+# position and orientation of mean_marker relative to marker
 # write all floats as x.y, e.g., 0.0
 # quaternions are standard ROS [x,y,z,w]
 
 markers: [
   [
     id: 1, 
-    position: [-0.1, 0.0, 0.0], 
-    orientation: [0.0, 0.0, 0.0, 1.0]
+    position: [0.0, 0.0, -0.025],
+    orientation: [-0.7071, 0.0, 0.0, 0.7071]
   ],
   [
     id: 2, 
-    position: [0.1, 0.0, 0.0], 
+    position: [0.0, 0.0, -0.025], 
+    orientation: [1.0, 0.0, 0.0, 0.0]
+  ],
+  [
+    id: 3, 
+    position: [0.0, 0.0, -0.025], 
+    orientation: [0.7071, 0.0, 0.0, 0.7071]
+  ],
+  [
+    id: 4, 
+    position: [0.0, 0.0, -0.025], 
     orientation: [0.0, 0.0, 0.0, 1.0]
-  ]
+  ],
+  [
+    id: 5, 
+    position: [0.0, 0.0, -0.025], 
+    orientation: [0.0, -0.7071, 0.0, 0.7071]
+  ],
+  [
+    id: 6, 
+    position: [0.0, 0.0, -0.025], 
+    orientation: [0.0, 0.7071, 0.0, 0.7071]
+  ],
 ]

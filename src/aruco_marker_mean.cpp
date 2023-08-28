@@ -49,11 +49,11 @@ void ArucoMarkerMean::init_tf()
     static tf2_ros::StaticTransformBroadcaster static_broadcaster;
     geometry_msgs::TransformStamped transform;
     transform.header.stamp = ros::Time::now();
-    transform.header.frame_id = "aruco_marker_mean";
 
     for(int i=0;i<markers.size();i++)
-    {        
-        transform.child_frame_id = "aruco_marker" + std::to_string(int(markers[i][0]["id"]));
+    {
+        transform.header.frame_id = "aruco_marker" + std::to_string(int(markers[i][0]["id"]));
+        transform.child_frame_id = "aruco_marker_mean" + std::to_string(int(markers[i][0]["id"]));
         transform.transform.translation.x = double(markers[i][1]["position"][0]);
         transform.transform.translation.y = double(markers[i][1]["position"][1]);
         transform.transform.translation.z = double(markers[i][1]["position"][2]);

@@ -62,15 +62,27 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
     bool one_relevant_marker_found = false;
     int marker_counter = 0;
     
-    geometry_msgs::TransformStamped transform;
+    static tf2_ros::TransformBroadcaster transform_broadcaster;
+    geometry_msgs::TransformStamped transform_camera_to_mean;
+    geometry_msgs::TransformStamped transform_camera_to_marker;
     Matrix4d A = Matrix4d::Zero(4,4);
     Vector4d qi = Vector4d::Zero(4);
 
     for(int i=0;i<markers.markers.size();i++)
     {
-        try // only take markers that have been registered with tf
+        try // only works if markers have been registered with tf
         {
-            transform = tf_buffer_.lookupTransform("aruco_marker"+std::to_string(markers.markers[i].id), "aruco_marker_mean", ros::Time(0));
+            transform_camera_to_marker.header.stamp = ros::Time::now();
+            transform_camera_to_marker.header.frame_id = "camera_link";
+            transform_camera_to_marker.child_frame_id = "aruco_marker"+std::to_string(markers.markers[i].id);
+            transform_camera_to_marker.transform.translation.x = markers.markers[i].pose.pose.position.x;
+            transform_camera_to_marker.transform.translation.y = markers.markers[i].pose.pose.position.y;
+            transform_camera_to_marker.transform.translation.z = markers.markers[i].pose.pose.position.z;
+            transform_camera_to_marker.transform.rotation = markers.markers[i].pose.pose.orientation;
+
+            transform_broadcaster.sendTransform(transform_camera_to_marker);
+
+            transform_camera_to_mean = tf_buffer_.lookupTransform("camera_link", "aruco_marker_mean"+std::to_string(markers.markers[i].id), ros::Time(0)); // This will fail if marker not registered with tf
 
             marker_counter++;
 
@@ -88,11 +100,11 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
                 marker_found_ = true;
             }
             
-            marker_mean_.pose.pose.position.x += markers.markers[i].pose.pose.position.x + transform.transform.translation.x;
-            marker_mean_.pose.pose.position.y += markers.markers[i].pose.pose.position.y + transform.transform.translation.y;
-            marker_mean_.pose.pose.position.z += markers.markers[i].pose.pose.position.z + transform.transform.translation.z; 
+            marker_mean_.pose.pose.position.x += transform_camera_to_mean.transform.translation.x;
+            marker_mean_.pose.pose.position.y += transform_camera_to_mean.transform.translation.y;
+            marker_mean_.pose.pose.position.z += transform_camera_to_mean.transform.translation.z; 
 
-            geometry_msgs::Quaternion q = quaternion_multiplication(markers.markers[i].pose.pose.orientation, transform.transform.rotation);
+            geometry_msgs::Quaternion q = transform_camera_to_mean.transform.rotation;
 
             qi[0] = q.x;
             qi[1] = q.y;
