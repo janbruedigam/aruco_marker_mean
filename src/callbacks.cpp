@@ -116,19 +116,31 @@ void ArucoMarkerMean::aruco_ros_markers_callback(const aruco_msgs::MarkerArray m
         catch(const std::exception&){}
     }
 
-    marker_mean_.pose.pose.position.x /= marker_counter;
-    marker_mean_.pose.pose.position.y /= marker_counter;
-    marker_mean_.pose.pose.position.z /= marker_counter;
+    if(one_relevant_marker_found)
+    {
+        marker_mean_.pose.pose.position.x /= marker_counter;
+        marker_mean_.pose.pose.position.y /= marker_counter;
+        marker_mean_.pose.pose.position.z /= marker_counter;
 
-    Eigen::SelfAdjointEigenSolver<Matrix4d> eigen_solver(A);
-    Vector4d q_mean = eigen_solver.eigenvectors().col(3); // largest eigenvector
+        Eigen::SelfAdjointEigenSolver<Matrix4d> eigen_solver(A);
+        Vector4d q_mean = eigen_solver.eigenvectors().col(3); // largest eigenvector
 
-    marker_mean_.pose.pose.orientation.x = q_mean[0];
-    marker_mean_.pose.pose.orientation.y = q_mean[1];
-    marker_mean_.pose.pose.orientation.z = q_mean[2];
-    marker_mean_.pose.pose.orientation.w = q_mean[3];
+        marker_mean_.pose.pose.orientation.x = q_mean[0];
+        marker_mean_.pose.pose.orientation.y = q_mean[1];
+        marker_mean_.pose.pose.orientation.z = q_mean[2];
+        marker_mean_.pose.pose.orientation.w = q_mean[3];
 
-    marker_mean_pub_.publish(marker_mean_);
+        marker_mean_pub_.publish(marker_mean_);
+
+        transform_camera_to_marker.header.frame_id = "camera_link";
+        transform_camera_to_marker.child_frame_id = "aruco_marker_mean";
+        transform_camera_to_marker.transform.translation.x = marker_mean_.pose.pose.position.x;
+        transform_camera_to_marker.transform.translation.y = marker_mean_.pose.pose.position.y;
+        transform_camera_to_marker.transform.translation.z = marker_mean_.pose.pose.position.z;
+        transform_camera_to_marker.transform.rotation = marker_mean_.pose.pose.orientation;
+
+        transform_broadcaster.sendTransform(transform_camera_to_marker);
+    }
 }
 
 void ArucoMarkerMean::camera_info_callback(const sensor_msgs::CameraInfo &msg)
